@@ -97,3 +97,28 @@ public static PublicKey createPublicKey(final String stringN, final String strin
 	<version>2.6</version>
 </dependency>
 ```
+
+
+## io.jsonwebtoken.SignatureException原因分析
+一部分成功，一部分失败；报错如下：
+`io.jsonwebtoken.SignatureException: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.`
+
+苹果官方会返回多个key，**原作者默认的取第一个，其实是有问题**
+需要通过identityToken中第一部分header的kid，取匹配一个具体的key
+
+核心代码
+```
+    String jwtKid = getKid(jwt);
+    for (Keys key : appleKeys.keys) {
+      if (StringUtils.equals(key.getKid(), jwtKid)) {
+        // 注意获得kid匹配的key
+        n = key.getN();
+        ee = key.getE();
+        logger.info(String.format("[苹果登录日志]jwt:%s,aud:%s,sub:%s", jwt, aud, sub));
+        break;
+      }
+    }
+```
+
+参考：
+https://www.jianshu.com/p/7e145d17dc0f
